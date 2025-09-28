@@ -4,29 +4,47 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Components/AudioComponent.h"
 #include "Sound/SoundCue.h"
 #include "DialogueComponent.generated.h"
 
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class GOLFGAME_API UDialogueComponent : public UActorComponent
+UCLASS(Blueprintable, BlueprintType, meta = (BlueprintSpawnableComponent))
+class GOLFGAME_API UDialogueComponent : public USceneComponent
 {
 	GENERATED_BODY()
 
 public:	
-	// Sets default values for this component's properties
+	
 	UDialogueComponent();
 
+	UPROPERTY(BlueprintReadWrite, Category="Dialogue")
+	TArray<USoundBase*> DialogueToPlay;
+
+	UPROPERTY(EditAnywhere, Category="Dialogue")
+	UAudioComponent* DialogueAudioComponent;
+
 protected:
-	// Called when the game starts
+	
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
+	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	UPROPERTY()
-		class USoundCue* CurrentSoundCue;
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	void PlayDialogueTrack();
 
+	UFUNCTION(BlueprintCallable, Category="Dialogue")
+	void AddDialogueToPlay(USoundBase* newDialogueTrack);
+
+	UFUNCTION(BlueprintCallable, Category="Dialogue")
+	void RemoveDialogueAfterFinished(USoundBase* newDialogueTrack);
+
+	UFUNCTION(BlueprintCallable, Category="Dialogue")
+	void OnDialogueFinished();
+
+	UFUNCTION(BlueprintCallable, Category="Dialogue")
+	void StopAndResetDialogue();
 		
 };

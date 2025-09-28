@@ -44,8 +44,7 @@ AGolfGameCharacter::AGolfGameCharacter()
 	Walk();
 
 	// set our turn rates for input
-	BaseTurnRate = 45.f;
-	BaseLookUpRate = 45.f;
+	BaseTurnRate = BaseLookUpRate = 45.f;
 
 	// Create a CameraComponent	
 	CameraPosition = FVector(-39.56f, 1.75f, 64.f);
@@ -61,10 +60,6 @@ AGolfGameCharacter::AGolfGameCharacter()
 
 	PhysicsHandle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle"));
 
-	DialoguePlayer = CreateDefaultSubobject<UAudioComponent>(TEXT("Dialogue Player"));
-	DialoguePlayer->SetAutoActivate(false);
-	
-	MusicPlayer = CreateDefaultSubobject<UAudioComponent>(TEXT("Music Player"));
 	
 }
 
@@ -192,14 +187,6 @@ void AGolfGameCharacter::Teleport()
 		SetActorLocation(ballLocation, false);
 		UGameplayStatics::PlaySoundAtLocation(this, TeleportSound, GetOwner()->GetActorLocation());
 	}
-	else
-	{
-		if(NeedToTeleportBallCue != nullptr)
-		{
-			DialoguePlayer->SetSound(NeedToTeleportBallCue);
-			DialoguePlayer->Play();
-		}
-	}
 
 }
 
@@ -210,53 +197,7 @@ void AGolfGameCharacter::SummonBall()
 		Ball->SetHasBeenSummonedOnce(true);
 		UGameplayStatics::PlaySoundAtLocation(this, SummonSound, GetOwner()->GetActorLocation());
 	}
-
-	if(!Ball->GetCanBallBeSummoned())
-	{
-		if(CannotSummonBallCue != nullptr)
-		{
-			DialoguePlayer->SetSound(CannotSummonBallCue);
-			DialoguePlayer->Play();
-		}
-	}	
+	
 }
 
-void AGolfGameCharacter::PlayDialogueCue()
-{
-	DialoguePlayer->Play();
-}
 
-void AGolfGameCharacter::PlayMusicCue()
-{
-	MusicPlayer->Play();
-}
-
-void AGolfGameCharacter::AdjustMusicVolumeUp()
-{
-	MusicPlayer->AdjustVolume(1, 1, EAudioFaderCurve::Linear);
-}
-
-void AGolfGameCharacter::AdjustMusicVolumeDown()
-{
-	MusicPlayer->AdjustVolume(1, 0, EAudioFaderCurve::Linear);
-}
-
-void AGolfGameCharacter::ChangeDialogueCue(USoundBase* NewDialogue)
-{
-	if(NewDialogue != nullptr)
-	{
-		CurrentDialogueCue = NewDialogue;
-		DialoguePlayer->SetSound(CurrentDialogueCue);
-		PlayDialogueCue();
-	}
-}
-
-void AGolfGameCharacter::ChangeMusicCue(USoundBase* NewMusic)
-{
-	if (NewMusic != nullptr)
-	{
-		CurrentDialogueCue = NewMusic;
-		MusicPlayer->SetSound(CurrentDialogueCue);
-		PlayMusicCue();
-	}
-}

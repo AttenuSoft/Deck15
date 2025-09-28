@@ -52,14 +52,6 @@ public:
 	UPROPERTY(VisibleAnywhere)
 		class UAudioComponent* DialoguePlayer;
 
-	/**\brief Audio component attached to the player to play music cues.*/
-	UPROPERTY(VisibleAnywhere)
-		class UAudioComponent* MusicPlayer;
-
-	/**\brief Current sound base for music.*/
-	UPROPERTY(EditAnywhere)
-		class USoundBase* CurrentMusicCue;
-
 	/**\brief Current dialogue cue for when the ball cannot be summoned.*/
 	UPROPERTY(EditAnywhere, Category = Sound)
 		class USoundBase* CannotSummonBallCue;
@@ -167,25 +159,6 @@ public:
 	/**\brief Returns FirstPersonCameraComponent subobject*/
 	FORCEINLINE class UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
-	/**\brief current dialogue cue for the player in the audio component for dialogue*/
-	void PlayDialogueCue();
-
-	/**\brief Plays the current music cue for the player in the audio component for music.*/
-	void PlayMusicCue();
-
-	/**\brief Adjusts volume up when dialogue cue ends, not used.*/
-	void AdjustMusicVolumeUp();
-
-	/**\brief Adjusts volume down when dialogue cue starts, not used.*/
-	void AdjustMusicVolumeDown();
-
-	//**\brief Swaps out old dialogue cue for new cue when overlapping a dialogue change trigger box.*/
-	UFUNCTION()
-		void ChangeDialogueCue(USoundBase* NewDialogue);
-
-	/**\brief Swaps out old music cue for new cue when overlapping music cue change trigger box.*/
-	UFUNCTION()
-		void ChangeMusicCue(USoundBase* NewMusic);
 
 private: 
 
