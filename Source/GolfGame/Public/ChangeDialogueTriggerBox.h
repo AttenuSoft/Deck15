@@ -4,6 +4,7 @@
 #include "GolfGameCharacter.h"
 #include "Sound/SoundBase.h"
 #include "GolfGameTriggerBox.h"
+#include "ConversationDataAsset.h"
 #include "ChangeDialogueTriggerBox.generated.h"
 /**
 *\brief When the player begins overlapping the ChangeDialogueTriggerBox, a new
@@ -37,7 +38,7 @@ public:
 	 * is selected in the UE4 editor.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
-	USoundBase* Dialogue;
+	UConversationDataAsset* Conversation;
 
 	/**\brief Play dialogue for player.*/
 	void DialoguePlay();

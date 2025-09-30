@@ -26,62 +26,124 @@ void UDialogueComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-void UDialogueComponent::PlayDialogueTrack()
+void UDialogueComponent::AddConversationToQueue(UConversationDataAsset* NewConversation)
 {
-	if (DialogueToPlay.Num() > 0)
+	Conversations.Add(NewConversation);
+
+	if (!bConversationPlaying)
 	{
-		if (!DialogueAudioComponent->OnAudioFinished.IsAlreadyBound(this, &UDialogueComponent::OnDialogueFinished))
+		SetupConversation();
+	}
+
+}
+
+void UDialogueComponent::SetupConversation()
+{
+	CurrentConversation = Conversations[0];
+	LastDialogueTrackIndex = CurrentConversation->Conversation.Num();
+	PlayConversation();
+}
+
+void UDialogueComponent::PlayConversation()
+{
+	if (CurrentConversation->Conversation[CurrentDialogueTrackIndex].Type == EDialogueType::Player)
+	{
+		if (!DialogueAudioComponent->OnAudioFinished.IsBound())
 		{
-			DialogueAudioComponent->OnAudioFinished.AddDynamic(this, &UDialogueComponent::OnDialogueFinished);
+			DialogueAudioComponent->OnAudioFinished.AddDynamic(this, &UDialogueComponent::DialogueFinishedPlaying);
 		}
-		
-		DialogueAudioComponent->SetSound(DialogueToPlay[0]);
+
+		DialogueAudioComponent->SetSound(CurrentConversation->Conversation[CurrentDialogueTrackIndex].DialogueTrack);
 		DialogueAudioComponent->Play();
-
+		bConversationPlaying = true;
 	}
+	else
+	{
+		PlayLoudSpeakerDialogue(CurrentConversation->Conversation[CurrentDialogueTrackIndex].DialogueTrack);
+	}
+
 
 }
 
-void UDialogueComponent::AddDialogueToPlay(USoundBase* newDialogueTrack)
+void UDialogueComponent::DialogueFinishedPlaying()
 {
-	if (newDialogueTrack != nullptr)
+	CurrentDialogueTrackIndex++;
+
+	if (CurrentDialogueTrackIndex == LastDialogueTrackIndex)
 	{
-		DialogueToPlay.AddUnique(newDialogueTrack);
-		if (!DialogueAudioComponent->IsPlaying())
+		CurrentConversation = nullptr;
+		Conversations.RemoveAt(0);
+		bConversationPlaying = false;
+		CurrentDialogueTrackIndex = 0;
+
+		if (Conversations.Num() > 0)
 		{
-			PlayDialogueTrack();
+			SetupConversation();
 		}
-	
+		else
+		{
+			DialogueAudioComponent->OnAudioFinished.RemoveDynamic(this, &UDialogueComponent::DialogueFinishedPlaying);
+		}
 	}
-
-}
-
-void UDialogueComponent::RemoveDialogueAfterFinished(USoundBase* newDialogueTrack)
-{
-	if (newDialogueTrack != nullptr)
+	else
 	{
-		DialogueToPlay.Remove(newDialogueTrack);
+		PlayConversation();
 	}
+
 }
 
-void UDialogueComponent::OnDialogueFinished()
+ALoudSpeaker* UDialogueComponent::FindNearestLoudSpeaker()
 {
-	RemoveDialogueAfterFinished(DialogueToPlay[0]);
+	TArray<AActor*> FoundLoudSpeakers = GetAllLoudSpeakers();
 
-	if (DialogueToPlay.Num() > 0)
+	if (FoundLoudSpeakers.Num() > 0)
 	{
-		PlayDialogueTrack();
+		float CurrentMinDistance = 1000000.0f;
+		AActor* ClosestLoudSpeaker = nullptr;
+
+		for (int i = 0; i < FoundLoudSpeakers.Num(); i++)
+		{
+			float tempDist = FVector::Dist(GetOwner()->GetActorLocation(), FoundLoudSpeakers[i]->GetActorLocation());
+			if (tempDist < CurrentMinDistance)
+			{
+				ClosestLoudSpeaker = FoundLoudSpeakers[i];
+			}
+		}
+
+		return Cast<ALoudSpeaker>(ClosestLoudSpeaker);
 	}
+
+	return nullptr;
 
 }
 
-void UDialogueComponent::StopAndResetDialogue()
+TArray<AActor*> UDialogueComponent::GetAllLoudSpeakers()
 {
-	if (DialogueAudioComponent->IsPlaying())
-	{
-		DialogueAudioComponent->FadeOut(2.0f, 0.0f);
-		DialogueAudioComponent->OnAudioFinished.RemoveDynamic(this, &UDialogueComponent::OnDialogueFinished);
-		DialogueToPlay.Empty();
-	}
+	TArray<AActor*> FoundLoudSpeakers;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALoudSpeaker::StaticClass(), FoundLoudSpeakers);
+
+	return FoundLoudSpeakers;
+
 }
+
+void UDialogueComponent::PlayLoudSpeakerDialogue(USoundBase* Dialogue)
+{
+	ALoudSpeaker* LoudSpeaker = FindNearestLoudSpeaker();
+
+	if (LoudSpeaker != nullptr && Dialogue != nullptr)
+	{
+		LoudSpeaker->DialogueAudioComponent->OnAudioFinished.AddDynamic(this, &UDialogueComponent::LoudSpeakerFinishedPlaying);
+		LoudSpeaker->PlayDialogueTrack(Dialogue);
+		LoudSpeakerCurrentlyPlaying = LoudSpeaker;
+	}
+
+}
+
+void UDialogueComponent::LoudSpeakerFinishedPlaying()
+{
+	LoudSpeakerCurrentlyPlaying->DialogueAudioComponent->OnAudioFinished.RemoveDynamic(this, &UDialogueComponent::LoudSpeakerFinishedPlaying);
+	DialogueFinishedPlaying();
+}
+
+
 

@@ -5,7 +5,10 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Components/AudioComponent.h"
+#include "ConversationDataAsset.h"
 #include "Sound/SoundCue.h"
+#include "LoudSpeaker.h"
+#include "Kismet/GameplayStatics.h"
 #include "DialogueComponent.generated.h"
 
 
@@ -18,11 +21,21 @@ public:
 	
 	UDialogueComponent();
 
-	UPROPERTY(BlueprintReadWrite, Category="Dialogue")
-	TArray<USoundBase*> DialogueToPlay;
+	UPROPERTY(EditAnywhere, Category="Dialogue")
+	TArray<UConversationDataAsset*> Conversations;
+
+	UConversationDataAsset* CurrentConversation;
 
 	UPROPERTY(EditAnywhere, Category="Dialogue")
 	UAudioComponent* DialogueAudioComponent;
+
+private:
+
+	bool bConversationPlaying = false;
+	int CurrentDialogueTrackIndex = 0;
+	int LastDialogueTrackIndex = 0;
+
+	ALoudSpeaker* LoudSpeakerCurrentlyPlaying;
 
 protected:
 	
@@ -33,18 +46,29 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
-	void PlayDialogueTrack();
+	void AddConversationToQueue(UConversationDataAsset* NewConversation);
 
-	UFUNCTION(BlueprintCallable, Category="Dialogue")
-	void AddDialogueToPlay(USoundBase* newDialogueTrack);
+private:
 
-	UFUNCTION(BlueprintCallable, Category="Dialogue")
-	void RemoveDialogueAfterFinished(USoundBase* newDialogueTrack);
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	void PlayConversation();
 
-	UFUNCTION(BlueprintCallable, Category="Dialogue")
-	void OnDialogueFinished();
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	void DialogueFinishedPlaying();
 
-	UFUNCTION(BlueprintCallable, Category="Dialogue")
-	void StopAndResetDialogue();
-		
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	ALoudSpeaker* FindNearestLoudSpeaker();
+
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	TArray<AActor*> GetAllLoudSpeakers();
+
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	void PlayLoudSpeakerDialogue(USoundBase* Dialogue);
+
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	void LoudSpeakerFinishedPlaying();
+
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	void SetupConversation();
+
 };
